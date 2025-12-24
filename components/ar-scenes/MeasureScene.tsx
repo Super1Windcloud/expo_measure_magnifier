@@ -22,24 +22,20 @@ ViroMaterials.createMaterials({
   },
 });
 
-interface MeasureSceneProps {
-  sceneNavigator?: {
-    viroAppProps: {
-      signalAddPoint: number;
-      signalClear: number;
-      signalUndo: number;
-    };
-  };
+interface Segment {
+  start: number[];
+  end: number[];
 }
 
 const MeasureScene = (props: any) => {
   const { sceneNavigator } = props;
   const { signalAddPoint, signalClear, signalUndo } = sceneNavigator?.viroAppProps || {};
 
-  const [points, setPoints] = useState<number[][]>([]);
+  const [segments, setSegments] = useState<Segment[]>([]);
+  const [activeStartPoint, setActiveStartPoint] = useState<number[] | null>(null);
   const [cursorPosition, setCursorPosition] = useState<number[] | null>(null);
   
-  // Refs to track previous signal values to detect changes
+  // Refs to track previous signal values
   const prevSignalAddPoint = useRef(signalAddPoint);
   const prevSignalClear = useRef(signalClear);
   const prevSignalUndo = useRef(signalUndo);
@@ -49,35 +45,43 @@ const MeasureScene = (props: any) => {
     if (signalAddPoint !== prevSignalAddPoint.current) {
       prevSignalAddPoint.current = signalAddPoint;
       if (cursorPosition) {
-          setPoints((currentPoints) => [...currentPoints, cursorPosition]);
+        if (!activeStartPoint) {
+          // First click: Set start point
+          setActiveStartPoint(cursorPosition);
+        } else {
+          // Second click: Complete segment
+          setSegments(prev => [...prev, { start: activeStartPoint, end: cursorPosition }]);
+          setActiveStartPoint(null); // Reset for next measurement
+        }
       }
     }
 
     // Handle Clear Signal
     if (signalClear !== prevSignalClear.current) {
       prevSignalClear.current = signalClear;
-      setPoints([]);
+      setSegments([]);
+      setActiveStartPoint(null);
     }
 
     // Handle Undo Signal
     if (signalUndo !== prevSignalUndo.current) {
       prevSignalUndo.current = signalUndo;
-      setPoints((currentPoints) => currentPoints.slice(0, -1));
+      if (activeStartPoint) {
+        // If measuring, cancel current measurement
+        setActiveStartPoint(null);
+      } else {
+        // If not measuring, remove last completed segment
+        setSegments(prev => prev.slice(0, -1));
+      }
     }
-  }, [signalAddPoint, signalClear, signalUndo, cursorPosition]);
+  }, [signalAddPoint, signalClear, signalUndo, cursorPosition, activeStartPoint]);
 
   const onCameraARHitTest = (results: any) => {
     if (results && results.hitTestResults && results.hitTestResults.length > 0) {
-      // Prioritize FeaturePoint or ExistingPlaneUsingExtent
-      // For now, just take the first result's position
       const hit = results.hitTestResults[0];
-      // Viro's hit test returns position in `transform.position` or simply `position` depending on version.
-      // Usually it's `transform.position` or `realWorldTransform`... 
-      // Checking docs/common usage: results.hitTestResults[0].transform.position is standard for ReactViro.
       if (hit.transform && hit.transform.position) {
           setCursorPosition(hit.transform.position);
       } else if (hit.position) {
-          // Fallback if older version
           setCursorPosition(hit.position);
       }
     } else {
@@ -112,54 +116,78 @@ const MeasureScene = (props: any) => {
     <ViroARScene onCameraARHitTest={onCameraARHitTest}>
       <ViroAmbientLight color="#ffffff" intensity={200} />
 
-      {/* Render existing points */}
-      {points.map((point, index) => (
-        <ViroSphere
-          key={`point-${index}`}
-          height={0.02}
-          length={0.02}
-          width={0.02}
-          position={point as any}
-          materials={["whiteSphere"]}
-        />
-      ))}
-
-      {/* Render lines and text */}
-      {points.map((point, index) => {
-        if (index < points.length - 1) {
-          const nextPoint = points[index + 1];
-          const distance = calculateDistance(point, nextPoint);
-          const midpoint = getMidpoint(point, nextPoint);
-
-          return (
-            <ViroNode key={`line-group-${index}`}>
-              <ViroPolyline
-                position={[0,0,0]}
-                points={[point, nextPoint] as any}
-                thickness={0.005}
-                materials={["lineStyle"]}
-              />
-              <ViroText
-                text={formatDistance(distance)}
-                position={midpoint as any}
-                scale={[0.1, 0.1, 0.1]}
-                style={styles.measurementText}
-                transformBehaviors={["billboard"]}
-              />
-            </ViroNode>
-          );
-        }
-        return null;
+      {/* Render Completed Segments */}
+      {segments.map((segment, index) => {
+        const distance = calculateDistance(segment.start, segment.end);
+        const midpoint = getMidpoint(segment.start, segment.end);
+        
+        return (
+          <ViroNode key={`segment-${index}`}>
+            {/* Start Point */}
+            <ViroSphere
+              height={0.02}
+              length={0.02}
+              width={0.02}
+              position={segment.start as any}
+              materials={["whiteSphere"]}
+            />
+            {/* End Point */}
+            <ViroSphere
+              height={0.02}
+              length={0.02}
+              width={0.02}
+              position={segment.end as any}
+              materials={["whiteSphere"]}
+            />
+            {/* Line */}
+            <ViroPolyline
+              position={[0,0,0]}
+              points={[segment.start, segment.end] as any}
+              thickness={0.005}
+              materials={["lineStyle"]}
+            />
+            {/* Distance Label */}
+            <ViroText
+              text={formatDistance(distance)}
+              position={midpoint as any}
+              scale={[0.1, 0.1, 0.1]}
+              style={styles.measurementText}
+              transformBehaviors={["billboard"]}
+            />
+          </ViroNode>
+        );
       })}
 
-      {/* Render dynamic line from last point to cursor if cursor exists and we have at least one point */}
-      {/* Optional: The iOS app doesn't always draw a line to the cursor until you tap, 
-          but usually it shows a "ghost" line or measure. 
-          Let's stick to placing points for now to keep it clean, or maybe adding a ghost line is better UX.
-          The user asked for "function interface", so just placing points is the core.
-      */}
+      {/* Render Active Dynamic Measurement */}
+      {activeStartPoint && cursorPosition && (
+        <ViroNode key="active-segment">
+           {/* Start Point */}
+           <ViroSphere
+              height={0.02}
+              length={0.02}
+              width={0.02}
+              position={activeStartPoint as any}
+              materials={["whiteSphere"]}
+            />
+            {/* Dynamic Line */}
+            <ViroPolyline
+              position={[0,0,0]}
+              points={[activeStartPoint, cursorPosition] as any}
+              thickness={0.005}
+              materials={["lineStyle"]}
+            />
+            {/* Dynamic Distance Label */}
+            <ViroText
+              text={formatDistance(calculateDistance(activeStartPoint, cursorPosition))}
+              position={getMidpoint(activeStartPoint, cursorPosition) as any}
+              scale={[0.1, 0.1, 0.1]}
+              style={styles.measurementText}
+              transformBehaviors={["billboard"]}
+            />
+        </ViroNode>
+      )}
       
-      {/* Render a small marker at cursor position to help user know if surface is detected */}
+      {/* Cursor Marker */}
       {cursorPosition && (
          <ViroSphere
             height={0.01}
