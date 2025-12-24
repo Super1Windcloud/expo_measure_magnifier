@@ -1,21 +1,21 @@
 {
   "expo": {
-    "name": "ViroReact Starter Kit",
-    "slug": "viroreact-starter-kit",
+    "name": "Measure Magnifier",
+    "slug": "measure-magnifier",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "expostartkit",
+    "scheme": "measuremagnifier",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.expo-starter-kit-typescript",
+      "bundleIdentifier": "com.supperwindcloud.measure-camera",
       "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "Starter Kit would like to read photos for AR experiences.",
+        "NSPhotoLibraryUsageDescription": "Measure Magnifier would like to read photos for AR experiences.",
         "NSPhotoLibraryAddUsageDescription": "Allow $(PRODUCT_NAME) to save photos",
-        "NSCameraUsageDescription": "Starter Kit uses your camera for AR experiences.",
-        "NSMicrophoneUsageDescription": "Starter Kit uses your microphone for AR experiences.",
+        "NSCameraUsageDescription": "Measure Magnifier uses your camera for AR experiences.",
+        "NSMicrophoneUsageDescription": "Measure Magnifier uses your microphone for AR experiences.",
         "GARAPIKey": "Your Google Cloud API Key",
         "NSLocationWhenInUseUsageDescription": "Allow $(PRODUCT_NAME) to use your location for AR experiences",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Allow $(PRODUCT_NAME) to use your location for AR experiences"
@@ -57,10 +57,10 @@
             "xRMode": "AR"
           },
           "ios": {
-            "cameraUsagePermission": "Starter Kit uses your camera for AR experiences.",
-            "microphoneUsagePermission": "Starter Kit uses your microphone for AR experiences.",
-            "photosPermission": "Starter Kit would like to read photos for AR experiences.",
-            "savephotosPermission": "Starter Kit would like to save photos to your library during AR experiences."
+            "cameraUsagePermission": "Measure Magnifier uses your camera for AR experiences.",
+            "microphoneUsagePermission": "Measure Magnifier uses your microphone for AR experiences.",
+            "photosPermission": "Measure Magnifier would like to read photos for AR experiences.",
+            "savephotosPermission": "Measure Magnifier would like to save photos to your library during AR experiences."
           },
           "googleCloudApiKey": "Your Google Cloud API Key",
           "cloudAnchorProvider": "arcore",

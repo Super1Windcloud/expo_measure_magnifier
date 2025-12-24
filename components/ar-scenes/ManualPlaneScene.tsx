@@ -6,7 +6,6 @@ import {
   ViroARPlaneSelector,
   Viro3DObject,
   ViroAmbientLight,
-  ViroBox,
 } from "@reactvision/react-viro";
 
 interface ManualPlaneSceneProps {
@@ -52,6 +51,7 @@ const ManualPlaneScene = (props: ManualPlaneSceneProps = {}) => {
         onPlaneSelected={onPlaneSelected}
       >
         <Viro3DObject
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
           source={require("../../assets/models/dog.glb")}
           position={[0, 0, 0]}
           scale={[0.3, 0.3, 0.3]}

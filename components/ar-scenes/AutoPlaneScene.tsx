@@ -55,6 +55,7 @@ const AutoPlaneScene = (props: AutoPlaneSceneProps = {}) => {
         onAnchorFound={onPlaneDetected}
       >
         <Viro3DObject
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
           source={require("../../assets/models/robot.glb")}
           position={[0, 0, 0]}
           scale={[0.3, 0.3, 0.3]}

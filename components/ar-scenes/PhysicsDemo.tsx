@@ -8,7 +8,6 @@ import {
   ViroBox,
   ViroMaterials,
   ViroSphere,
-  ViroNode,
 } from "@reactvision/react-viro";
 
 ViroMaterials.createMaterials({
