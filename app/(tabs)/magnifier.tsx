@@ -1,11 +1,12 @@
-import { useState } from 'react';
-import { StyleSheet, Text, View, Platform, Button, TextInput } from 'react-native';
+import { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, Button, TextInput, AppState, AppStateStatus } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useSharedValue, runOnJS, useAnimatedProps } from 'react-native-reanimated';
 import Slider from '@react-native-community/slider';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome } from '@expo/vector-icons';
+import { useIsFocused } from '@react-navigation/native';
 
 const MAX_ZOOM_FACTOR = 5; // Maximum 5x zoom display
 Animated.addWhitelistedNativeProps({ text: true });
@@ -16,6 +17,21 @@ export default function MagnifierScreen() {
   const zoom = useSharedValue(0);
   const startZoom = useSharedValue(0);
   const [zoomDisplay, setZoomDisplay] = useState(0);
+  
+  // Lifecycle management
+  const isFocused = useIsFocused();
+  const [appState, setAppState] = useState<AppStateStatus>(AppState.currentState);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      setAppState(nextAppState);
+    });
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
+  const isCameraActive = isFocused && appState === 'active';
 
   const pinch = Gesture.Pinch()
     .onStart(() => {
@@ -81,12 +97,14 @@ export default function MagnifierScreen() {
     <View style={styles.container}>
       <GestureDetector gesture={pinch}>
         <View style={styles.cameraContainer}>
-             <AnimatedCameraView 
-                style={styles.camera} 
-                facing="back"
-                zoom={zoom}
-                autofocus="on"
-             />
+             {isCameraActive && (
+               <AnimatedCameraView 
+                  style={styles.camera} 
+                  facing="back"
+                  zoom={zoom as any}
+                  autofocus="on"
+               />
+             )}
              
              {/* Bottom Control Panel */}
              <View style={styles.bottomPanel}>
